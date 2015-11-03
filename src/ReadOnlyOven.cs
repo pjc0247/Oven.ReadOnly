@@ -43,19 +43,17 @@ namespace Oven
                 null,
                 new Type[] { intf });
 
-            ConstructorBuilder staticConstructorBuilder =
+            ConstructorBuilder ctor =
                 typeBuilder.DefineConstructor(
                     MethodAttributes.Public,
                     CallingConventions.Standard,
                     Type.EmptyTypes);
-            ILGenerator staticConstructorILGenerator =
-                staticConstructorBuilder.GetILGenerator();
+            ILGenerator ilGen =
+                ctor.GetILGenerator();
 
             info.target = typeBuilder.DefineField("target", typeof(object), FieldAttributes.Public);
 
-            //staticConstructorILGenerator.Emit(OpCodes.Ldstr, "ASDF");
-
-            staticConstructorILGenerator.Emit(OpCodes.Ret);
+            ilGen.Emit(OpCodes.Ret);
 
             return typeBuilder;
         }
@@ -83,7 +81,10 @@ namespace Oven
 
             foreach (var param in method.GetParameters())
                 ilGen.Emit(OpCodes.Ldarg, param.Position + 1);
-            ilGen.Emit(OpCodes.Callvirt, impl.GetMethod(method.Name));
+            ilGen.Emit(OpCodes.Callvirt,
+                impl.GetMethod(
+                    method.Name,
+                    method.GetParameters().Select(m => m.ParameterType).ToArray()));
             ilGen.Emit(OpCodes.Ret);
 
             return methodBuilder;
