@@ -105,7 +105,7 @@ namespace Oven
                 prop.PropertyType,
                 null);
             var ilGen = methodBuilder.GetILGenerator();
-            
+
             ilGen.Emit(OpCodes.Ldarg_0);
             ilGen.Emit(OpCodes.Ldfld, info.target);
             ilGen.Emit(OpCodes.Callvirt,
@@ -115,21 +115,73 @@ namespace Oven
             return methodBuilder;
         }
 
+        static List<PropertyInfo> GetProperties(Type intf)
+        {
+            List<PropertyInfo> props = new List<PropertyInfo>();
+            HashSet<Type> processed = new HashSet<Type>();
+            var q = new Queue<Type>();
+
+            q.Enqueue(intf);
+            while (q.Count > 0)
+            {
+                var v = q.Dequeue();
+
+                processed.Add(v);
+                foreach (var i in v.GetInterfaces())
+                {
+                    if (processed.Contains(i))
+                        continue;
+
+                    q.Enqueue(i);
+                }
+
+                props.AddRange(v.GetProperties());
+            }
+
+            return props.Distinct().ToList();
+        }
+        static List<MethodInfo> GetMethods(Type intf)
+        {
+            List<MethodInfo> props = new List<MethodInfo>();
+            HashSet<Type> processed = new HashSet<Type>();
+            var q = new Queue<Type>();
+
+            q.Enqueue(intf);
+            while (q.Count > 0)
+            {
+                var v = q.Dequeue();
+
+                processed.Add(v);
+                foreach (var i in v.GetInterfaces())
+                {
+                    if (processed.Contains(i))
+                        continue;
+
+                    q.Enqueue(i);
+                }
+
+                props.AddRange(v.GetMethods());
+            }
+
+            return props.Distinct().ToList();
+        }
+
         public static TBakeInterface Bake<TBakeInterface, TBakeImpl>(TBakeImpl impl)
         {
             var info = new BakeInfo();
             var typeBuilder = CreateType(info, typeof(TBakeInterface));
 
             /* black magic */
-            foreach (var prop in typeof(TBakeInterface).GetProperties())
+            foreach (var prop in GetProperties(typeof(TBakeInterface)))
             {
                 CreateProperty(
                     info,
                     typeof(TBakeInterface), typeof(TBakeImpl),
                     typeBuilder, prop);
             }
-            foreach (var method in typeof(TBakeInterface).GetMethods())
+            foreach (var method in GetMethods(typeof(TBakeInterface)))
             {
+                Console.WriteLine(method.Name);
                 CreateMethod(
                     info,
                     typeof(TBakeInterface), typeof(TBakeImpl),
