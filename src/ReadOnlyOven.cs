@@ -105,11 +105,7 @@ namespace Oven
                 prop.PropertyType,
                 null);
             var ilGen = methodBuilder.GetILGenerator();
-
-            var dst = impl.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-                .Where(m => m.Name.Contains(prop.Name))
-                .First();
-
+            
             ilGen.Emit(OpCodes.Ldarg_0);
             ilGen.Emit(OpCodes.Ldfld, info.target);
             ilGen.Emit(OpCodes.Callvirt,
